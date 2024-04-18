@@ -12,5 +12,12 @@
         <maven.compiler.source>18</maven.compiler.source>
         <maven.compiler.target>18</maven.compiler.target>
     </properties>
-
+    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.6.1</version>
+        </dependency>
+    </dependencies>
 </project>
