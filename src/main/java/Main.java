@@ -1,7 +1,7 @@
 import org.apache.commons.math3.distribution.NormalDistribution;
 
 public class Main {
-    private final static double SENSITIVITY = 0.00000001;
+    private static final double SENSITIVITY = 1e-8;
     private static final NormalDistribution normalDistribution = new NormalDistribution();
     private static final double unitCost = 20;
     private static final double annualInterestRate = 0.25;
@@ -9,7 +9,7 @@ public class Main {
     private static final double leadTime = 1.0 / 3.0;
     private static final double lossOfGoodWillCost = 20;
     private static final double average = 500;
-    private static final double standartDeviation = 100;
+    private static final double standardDeviation = 100;
     private static double annualDemand, holdingCost, qOld, fr, z, lz, nr, qNew, rOld, rNew, safetyStock,
                    averageAnnualHoldingCost, setupCost,penaltyCost, averageTimeOrders, proportionDemand;
 
@@ -18,6 +18,28 @@ public class Main {
     }
 
     public static void calculate() {
+        initializeVariables();
+        printResults(0, qOld, rOld);
+
+        for (int i = 1; !checkConverge() ; i++) {
+            updateVariables();
+            printResults(i, qNew, rNew);
+        }
+    }
+
+    private static void updateVariables() {
+        qOld = qNew;
+        rOld = rNew;
+        qNew = q();
+        fr = fr(qNew);
+        z = getStandardValue(fr);
+        lz = getStandLossValue(z);
+        rNew = r();
+        nr = nr();
+        otherCalculations(rNew,qNew);
+    }
+
+    private static void initializeVariables() {
         annualDemand = average / leadTime;
         holdingCost = annualInterestRate * unitCost;
         qOld = q0();
@@ -26,42 +48,19 @@ public class Main {
         lz = getStandLossValue(z);
         rOld = r();
         nr = nr();
-        safetyStock = safetyStock(rOld);
-        averageAnnualHoldingCost = averageAnnualHoldingCost(qOld);
-        setupCost = setupCost(qOld);
-        penaltyCost = penaltyCost(qOld);
-        averageTimeOrders = averageTimeOrders(qOld);
-        proportionDemand = proportionDemand(qOld);
-
-        printResults(0, qOld, rOld, safetyStock, averageAnnualHoldingCost, setupCost,penaltyCost, averageTimeOrders,proportionDemand, fr, z, lz, nr);
-
-        int i = 1;
-
-        while (true) {
-            qNew = q();
-            fr = fr(qNew);
-            z = getStandardValue(fr);
-            lz = getStandLossValue(z);
-            rNew = r();
-            nr = nr();
-            safetyStock = safetyStock(rNew);
-            averageAnnualHoldingCost = averageAnnualHoldingCost(qNew);
-            setupCost = setupCost(qNew);
-            penaltyCost = penaltyCost(qNew);
-            averageTimeOrders = averageTimeOrders(qNew);
-            proportionDemand = proportionDemand(qNew);
-
-            printResults(i, qNew, rNew, safetyStock, averageAnnualHoldingCost, setupCost,penaltyCost,averageTimeOrders,proportionDemand, fr, z, lz, nr);
-
-            if (checkConverge()) break;
-
-            i++;
-            qOld = qNew;
-            rOld = rNew;
-        }
+        otherCalculations(rOld,qOld);
     }
 
-    private static void printResults(int i, double q, double r, double safetyStock, double averageAnnualHoldingCost, double setupCost, double penaltyCost, double averageTimeOrders, double proportionDemand, double fr, double z, double lz, double nr) {
+    private static void otherCalculations(double r, double q){
+        safetyStock = safetyStock(r);
+        averageAnnualHoldingCost = averageAnnualHoldingCost(q);
+        setupCost = setupCost(q);
+        penaltyCost = penaltyCost(q);
+        averageTimeOrders = averageTimeOrders(q);
+        proportionDemand = proportionDemand(q);
+    }
+
+    private static void printResults(int i, double q, double r) {
         System.out.println(
                         "i = " + i + " | " +
                         "\tq = " + formatDouble(q) + " | " +
@@ -134,11 +133,11 @@ public class Main {
     }
 
     private static double r() {
-        return average + (standartDeviation * z);
+        return average + (standardDeviation * z);
     }
 
     private static double nr() {
-        return standartDeviation * lz;
+        return standardDeviation * lz;
     }
 
     private static double q() {
